@@ -2,11 +2,11 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
-import google.generativeai as genai
+from google import genai
 
 GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-1.5-pro")
+client = genai.Client(api_key=GEMINI_API_KEY)
+MODEL_NAME = "gemini-2.5-flash"
 
 def fetch_data(ticker, period, interval):
     df = yf.download(
@@ -43,8 +43,11 @@ def identify_candlestick_pattern(open_price, high_price, low_price, close_price)
     - Close: {close_price}
     Identify the candlestick pattern and its significance. Provide a brief explanation. How it impacts, is it bearish or bullish signal etc.
     """
-    response = model.generate_content(prompt)
-    return response.text.strip() if response else "Pattern could not be identified."
+    response = client.models.generate_content(
+        model=MODEL_NAME,
+        contents=prompt,
+    )
+    return response.text.strip() if getattr(response, "text", None) else "Pattern could not be identified."
 st.title("📈 Candlestick Chart Analyzer with AI")
 
 ticker = st.text_input("Enter Stock Ticker (e.g., AAPL, TSLA, TATAMOTORS.NS etc)", "AAPL")
